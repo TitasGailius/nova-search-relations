@@ -1,0 +1,24 @@
+{
+    "name": "titasgailius/search-relations",
+    "description": "A Laravel Nova tool.",
+    "keywords": [
+        "laravel",
+        "nova",
+        "search",
+        "relations"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": ">=7.1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Titasgailius\\SearchRelations\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
