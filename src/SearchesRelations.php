@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Builder;
 trait SearchesRelations
 {
     /**
+     * Determine if this resource is searchable.
+     *
+     * @return bool
+     */
+    public static function searchable()
+    {
+        return parent::searchable() || ! empty(static::$searchRelations);
+    }
+
+    /**
      * Apply the search query to the query.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
