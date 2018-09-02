@@ -26,8 +26,8 @@ trait SearchesRelations
      */
     protected static function applySearch($query, $search)
     {
-        return tap(parent::applySearch($query, $search), function ($query) use ($search) {
-            static::applyRelationSearch($query, $search);
+        return $query->where(function ($query) use ($search) {
+            return static::applyRelationSearch(parent::applySearch($query, $search), $search);
         });
     }
 
@@ -36,23 +36,17 @@ trait SearchesRelations
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  string  $search
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public static function applyRelationSearch(Builder $query, string $search)
+    public static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        foreach (static::searchableRelations() as $relation => $columns) {
+        foreach ($searchableRelations = static::searchableRelations() as $relation => $columns) {
             $query->orWhereHas($relation, function ($query) use ($columns, $search) {
                 $query->where(static::searchQueryApplier($columns, $search));
             });
         }
 
-        // All search conditionals have to be combined into 1 nested conditional.
-        // We just applied a query to search for relationship columns while Nova
-        // has also applied a separate query to search for model columns. That's
-        // why we merge last 2 conditionals into 1 nested conditional which leaves
-        // us with this nicely formatted query that also seatches in relationships.
-        // SELECT ? FROM ? WHERE ($searchQuery OR $relationQuery)
-        static::mergeLastWheres($query, 2);
+        return $query;
     }
 
     /**
@@ -79,22 +73,5 @@ trait SearchesRelations
                 $query->orWhere($column, 'LIKE', '%'.$search.'%');
             }
         };
-    }
-
-    /**
-     * Merge last where conditionals into a 1 nested conditional.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param  int $count
-     * @return void
-     */
-    public static function mergeLastWheres(Builder $query, int $count)
-    {
-        $query = $query->getQuery();
-        $queries = array_splice($query->wheres, $count);
-
-        $query->where(function ($query) use ($queries) {
-            $query->wheres = array_merge($query->wheres, $queries);
-        });
     }
 }
