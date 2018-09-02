@@ -37,7 +37,8 @@ trait SearchesRelations
     protected static function applySearch($query, $search)
     {
         return $query->where(function ($query) use ($search) {
-            return static::applyRelationSearch(parent::applySearch($query, $search), $search);
+            parent::applySearch($query, $search);
+            static::applyRelationSearch($query, $search);
         });
     }
 
