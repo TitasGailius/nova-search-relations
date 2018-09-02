@@ -51,7 +51,7 @@ trait SearchesRelations
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        foreach ($searchableRelations = static::searchableRelations() as $relation => $columns) {
+        foreach (static::searchableRelations() as $relation => $columns) {
             $query->orWhereHas($relation, function ($query) use ($columns, $search) {
                 $query->where(static::searchQueryApplier($columns, $search));
             });
