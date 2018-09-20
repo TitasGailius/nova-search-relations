@@ -1,6 +1,6 @@
 # Search relationships in Laravel Nova
 
-This package allow you to include relationship columns into Laravel Nova search query.
+This package allows you to include relationship columns into Laravel Nova search query.
 
 ## Screenshot
 
