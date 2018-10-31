@@ -1,6 +1,6 @@
 <?php
 
-namespace Masardee\SearchRelations;
+namespace Titasgailius\SearchRelations;
 
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
