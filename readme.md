@@ -23,6 +23,8 @@ abstract class Resource extends NovaResource
 
 ## Usage
 
+**Simple Usage**
+
 Simply add `public static $searchRelations` array to any of your Nova resources.
 This array has a relationship name as a key and an array of columns to search for as a value.
 ```php
@@ -33,5 +35,22 @@ This array has a relationship name as a key and an array of columns to search fo
  */
 public static $searchRelations = [
     'user' => ['username', 'email'],
+];
+```
+**Nested Relationship**
+
+If you want to search through a nested relationship, you could put another `$searchRelations` array style as a child.    
+```php
+/**
+ * The relationship columns that should be searched.
+ *
+ * @var array
+ */
+public static $searchRelations = [
+    'user' => [
+        'username', 
+        'email',
+        'type' => ['name']
+    ],
 ];
 ```
