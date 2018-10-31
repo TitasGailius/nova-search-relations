@@ -1,5 +1,5 @@
 {
-    "name": "titasgailius/search-relations",
+    "name": "masardee/nova-search-relations-recursive",
     "description": "A Laravel Nova tool.",
     "keywords": [
         "laravel",
@@ -13,7 +13,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Titasgailius\\SearchRelations\\": "src/"
+            "Masardee\\SearchRelations\\": "src/"
         }
     },
     "config": {

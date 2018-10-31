@@ -1,6 +1,6 @@
 <?php
 
-namespace Titasgailius\SearchRelations;
+namespace Masardee\SearchRelations;
 
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,7 +38,7 @@ trait SearchesRelations
     {
         return $query->where(function ($query) use ($search) {
             parent::applySearch($query, $search);
-            static::applyRelationSearch($query, $search);
+            static::applyRelationSearch($query, $search, static::searchableRelations());
         });
     }
 
@@ -47,13 +47,23 @@ trait SearchesRelations
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  string  $search
+     * @param  array   $relations
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    protected static function applyRelationSearch(Builder $query, string $search): Builder
+    protected static function applyRelationSearch(Builder $query, string $search, array $relations): Builder
     {
-        foreach (static::searchableRelations() as $relation => $columns) {
+        foreach ($relations as $relation => $columns) {
             $query->orWhereHas($relation, function ($query) use ($columns, $search) {
-                $query->where(static::searchQueryApplier($columns, $search));
+                $stringColumns = [];
+                $relationColumns = [];
+                foreach($columns as $nestedRelation => $column){
+                    if(is_array($column))
+                        $relationColumns[$nestedRelation] = $column;
+                    else
+                        $stringColumns[] = $column;
+                }
+                $query->where(static::searchQueryApplier($stringColumns, $search));
+                static::applyRelationSearch($query, $search, $relationColumns);
             });
         }
 
