@@ -35,3 +35,53 @@ public static $searchRelations = [
     'user' => ['username', 'email'],
 ];
 ```
+
+## Global search
+
+You may disable global search for relationship columns by defining `$searchRelationsGlobally` property in your nova resource:
+
+```php
+/**
+ * Determine if relations should be searched globally.
+ *
+ * @var array
+ */
+public static $searchRelationsGlobally = false;
+```
+
+When you have disabled global search for relationships, you may still enable it for specific relationships like this:
+```php
+/**
+ * Determine if relations should be searched globally.
+ *
+ * @var array
+ */
+public static $searchRelationsGlobally = false;
+
+/**
+ * The relationship columns that should be searched globally.
+ *
+ * @var array
+ */
+public static $globalSearchRelations = [
+    'user' => ['email'],
+];
+
+```
+
+Now when searching globally, Laravel Nova is going to **ignore** relationships declared in `$searchRelations` and is going to use `$globalSearchRelations` instead.
+
+## Nested relationships
+
+You may search nested relationships using dot notation.
+
+```php
+/**
+ * The relationship columns that should be searched.
+ *
+ * @var array
+ */
+public static $searchRelations = [
+    'user.country' => ['code'],
+];
+```

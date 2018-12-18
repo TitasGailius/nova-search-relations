@@ -24,7 +24,23 @@ trait SearchesRelations
      */
     public static function searchableRelations(): array
     {
+        $searchRelationsGlobally = static::$searchRelationsGlobally ?? true;
+
+        if (!$searchRelationsGlobally && static::isGlobalSearch()) {
+            return static::$globalSearchRelations ?? [];
+        }
+
         return static::$searchRelations ?? [];
+    }
+
+    /**
+     * Determine whether current request is for global search.
+     *
+     * @return boolean
+     */
+    protected static function isGlobalSearch()
+    {
+         return request()->route()->action['uses'] === 'Laravel\Nova\Http\Controllers\SearchController@index';
     }
 
     /**
