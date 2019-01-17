@@ -14,7 +14,7 @@ trait SearchesRelations
      */
     public static function searchable()
     {
-        return parent::searchable() || ! empty(static::$searchRelations);
+        return parent::searchable() || !empty(static::$searchRelations);
     }
 
     /**
@@ -36,11 +36,11 @@ trait SearchesRelations
     /**
      * Determine whether current request is for global search.
      *
-     * @return boolean
+     * @return bool
      */
     protected static function isGlobalSearch()
     {
-         return request()->route()->action['uses'] === 'Laravel\Nova\Http\Controllers\SearchController@index';
+        return request()->route()->action['uses'] === 'Laravel\Nova\Http\Controllers\SearchController@index';
     }
 
     /**
@@ -87,7 +87,7 @@ trait SearchesRelations
     {
         return function ($query) use ($columns, $search) {
             foreach ($columns as $column) {
-                $query->orWhere($column, 'LIKE', '%'.$search.'%');
+                $query->orWhere($column, 'LIKE', '%' . $search . '%');
             }
         };
     }
