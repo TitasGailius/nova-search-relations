@@ -86,8 +86,15 @@ trait SearchesRelations
     protected static function searchQueryApplier(array $columns, string $search): Closure
     {
         return function ($query) use ($columns, $search) {
+
+            $model = $query->getModel();
+
+            $connectionType = $query->getModel()->getConnection()->getDriverName();
+
+            $likeOperator = $connectionType == 'pgsql' ? 'ilike' : 'like';
+
             foreach ($columns as $column) {
-                $query->orWhere($column, 'LIKE', '%' . $search . '%');
+                $query->orWhere($model->qualifyColumn($column), $likeOperator, '%' . $search . '%');
             }
         };
     }
