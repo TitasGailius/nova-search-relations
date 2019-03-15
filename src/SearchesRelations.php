@@ -86,16 +86,27 @@ trait SearchesRelations
     protected static function searchQueryApplier(array $columns, string $search): Closure
     {
         return function ($query) use ($columns, $search) {
-
             $model = $query->getModel();
-
-            $connectionType = $query->getModel()->getConnection()->getDriverName();
-
-            $likeOperator = $connectionType == 'pgsql' ? 'ilike' : 'like';
+            $operator = static::operator($query);
 
             foreach ($columns as $column) {
-                $query->orWhere($model->qualifyColumn($column), $likeOperator, '%' . $search . '%');
+                $query->orWhere($model->qualifyColumn($column), $operator, '%'.$search.'%');
             }
         };
+    }
+
+    /**
+     * Resolve the query operator.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return string
+     */
+    protected static function operator(Builder $query): string
+    {
+        if ($query->getModel()->getConnection()->getDriverName() === 'pgsql') {
+            return 'ILIKE';
+        }
+
+        return 'LIKE';
     }
 }
