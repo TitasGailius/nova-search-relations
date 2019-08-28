@@ -88,9 +88,10 @@ trait SearchesRelations
         return function ($query) use ($columns, $search) {
             $model = $query->getModel();
             $operator = static::operator($query);
+            $search = strtolower($search);
 
             foreach ($columns as $column) {
-                $query->orWhere($model->qualifyColumn($column), $operator, '%'.$search.'%');
+                $query->orWhereRaw("LOWER({$model->qualifyColumn($column)}) {$operator} '%{$search}%'");
             }
         };
     }
