@@ -71,21 +71,16 @@ trait SearchesRelations
                                 );
 
                                 $builder->orWhereRaw("(exists($relatedQuery))");
+                                $model = $builder->getModel();
+
+                                foreach (static::searchableColumns() as $column) {
+                                    $builder->orWhere($model->qualifyColumn($column), 'like', $part.'%');
+                                }
                             }
                         });
                 };
             })
-            ->orWhere(function ($query) use ($search) {
-                $parts = explode(',', $search);
-                foreach ($parts as $part) {
-                    $part = addslashes($part);
-                    $model = $query->getModel();
-
-                    foreach (static::searchableColumns() as $column) {
-                        $query->orWhere($model->qualifyColumn($column), 'like', $part.'%');
-                    }
-                }
-            });
+            ->dd();
     }
 
 
