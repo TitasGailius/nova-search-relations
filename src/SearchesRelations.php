@@ -85,7 +85,7 @@ trait SearchesRelations
                         $query->orWhere($model->qualifyColumn($column), 'like', $part.'%');
                     }
                 }
-            })->dd();
+            });
     }
 
 
