@@ -2,8 +2,8 @@
 
 namespace Titasgailius\SearchRelations;
 
-use Closure;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 trait SearchesRelations
 {
@@ -46,8 +46,9 @@ trait SearchesRelations
     /**
      * Apply the search query to the query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $search
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string                                $search
+     *
      * @return \Illuminate\Database\Eloquent\Builder
      */
     protected static function applySearch($query, $search)
@@ -61,55 +62,56 @@ trait SearchesRelations
     /**
      * Apply the relationship search query to the given query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $search
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string                                $search
+     *
      * @return \Illuminate\Database\Eloquent\Builder
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        foreach (static::searchableRelations() as $relation => $columns) {
-            $query->orWhereHas($relation, function ($query) use ($columns, $search) {
-                $query->where(static::searchQueryApplier($columns, $search));
-            });
-        }
+        $parts = explode(',', $search);
+        foreach ($parts as $part) {
+            $query->where(function(Builder $query) use($part) {
+                foreach (static::searchableRelations() as $relation => $columns) {
 
+                    $relatedQuery = str_replace(
+                        '?',
+                        "'$part'",
+                        static::searchQueryApplier($query->getModel()->{$relation}()->getRelated(),
+                            $columns,
+                            $part
+                        )->toSql() . " AND " . $query->getModel()->{$relation}()->getQualifiedForeignKeyName() . ' = ' . $query->getModel()->{$relation}()->getQualifiedOwnerKeyName()
+                    );
+
+
+                    $query->orWhereRaw("(exists($relatedQuery))");
+                }
+            });
+
+
+        }
+        
         return $query;
     }
 
     /**
      * Returns a Closure that applies a search query for a given columns.
      *
-     * @param  array $columns
-     * @param  string $search
+     * @param array  $columns
+     * @param string $search
+     *
      * @return \Closure
      */
-    protected static function searchQueryApplier(array $columns, string $search): Closure
+    protected static function searchQueryApplier(Model $model, array $columns, string $search): Builder
     {
-        return function ($query) use ($columns, $search) {
-            $model = $query->getModel();
-            $operator = static::operator($query);
-
-            foreach ($columns as $column) {
-                $parts = explode(',', $search);
-                foreach ($parts as $part) {
-                    $query->orWhere($model->qualifyColumn($column), $operator, '%'.$part.'%');
-                }
+        $query = $model->newQuery();
+        foreach ($columns as $column) {
+            $parts = explode(',', $search);
+            foreach ($parts as $part) {
+                $query->orWhere($model->qualifyColumn($column), 'LIKE', '%'.$part.'%');
             }
-        };
-    }
-
-    /**
-     * Resolve the query operator.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return string
-     */
-    protected static function operator(Builder $query): string
-    {
-        if ($query->getModel()->getConnection()->getDriverName() === 'pgsql') {
-            return 'ILIKE';
         }
 
-        return 'LIKE';
+        return $query;
     }
 }
