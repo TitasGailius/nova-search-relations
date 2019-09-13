@@ -69,28 +69,27 @@ trait SearchesRelations
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        $parts = explode(',', $search);
-        foreach ($parts as $part) {
-            $query->where(function(Builder $query) use($part) {
-                foreach (static::searchableRelations() as $relation => $columns) {
+        $query->orWhere(function(Builder $builder) use ($search) {
+            $parts = explode(',', $search);
+            foreach ($parts as $part) {
+                $builder->where(function(Builder $builder) use($part) {
+                    foreach (static::searchableRelations() as $relation => $columns) {
+                        $relatedQuery = str_replace(
+                            '?',
+                            "'$part'",
+                            static::searchQueryApplier($builder->getModel()->{$relation}()->getRelated(),
+                                $columns,
+                                $part
+                            )->toSql() . " AND " . $builder->getModel()->{$relation}()->getQualifiedForeignKeyName() . ' = ' . $builder->getModel()->{$relation}()->getQualifiedOwnerKeyName()
+                        );
 
-                    $relatedQuery = str_replace(
-                        '?',
-                        "'$part'",
-                        static::searchQueryApplier($query->getModel()->{$relation}()->getRelated(),
-                            $columns,
-                            $part
-                        )->toSql() . " AND " . $query->getModel()->{$relation}()->getQualifiedForeignKeyName() . ' = ' . $query->getModel()->{$relation}()->getQualifiedOwnerKeyName()
-                    );
+                        $builder->orWhereRaw("(exists($relatedQuery))");
+                    }
+                });
+            };
+        });
 
 
-                    $query->orWhereRaw("(exists($relatedQuery))");
-                }
-            });
-
-
-        }
-        
         return $query;
     }
 
