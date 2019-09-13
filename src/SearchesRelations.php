@@ -53,45 +53,41 @@ trait SearchesRelations
      */
     protected static function applySearch($query, $search)
     {
-        return $query->where(function ($query) use ($search) {
-            parent::applySearch($query, $search);
-            static::applyRelationSearch($query, $search);
-        });
-    }
+        return $query
+            ->orWhere(function (Builder $builder) use ($search) {
+                $parts = explode(',', $search);
+                foreach ($parts as $part) {
+                    $part = addslashes($part);
+                    $builder
+                        ->where(function (Builder $builder) use ($part) {
+                            foreach (static::searchableRelations() as $relation => $columns) {
+                                $relatedQuery = str_replace(
+                                    '?',
+                                    "'$part'",
+                                    static::searchQueryApplier($builder->getModel()->{$relation}()->getRelated(),
+                                        $columns,
+                                        $part
+                                    )->toSql()." AND ".$builder->getModel()->{$relation}()->getQualifiedForeignKeyName().' = '.$builder->getModel()->{$relation}()->getQualifiedOwnerKeyName()
+                                );
 
-    /**
-     * Apply the relationship search query to the given query.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param string                                $search
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    protected static function applyRelationSearch(Builder $query, string $search): Builder
-    {
-        $query->orWhere(function(Builder $builder) use ($search) {
-            $parts = explode(',', $search);
-            foreach ($parts as $part) {
-                $builder->where(function(Builder $builder) use($part) {
-                    foreach (static::searchableRelations() as $relation => $columns) {
-                        $relatedQuery = str_replace(
-                            '?',
-                            "'$part'",
-                            static::searchQueryApplier($builder->getModel()->{$relation}()->getRelated(),
-                                $columns,
-                                $part
-                            )->toSql() . " AND " . $builder->getModel()->{$relation}()->getQualifiedForeignKeyName() . ' = ' . $builder->getModel()->{$relation}()->getQualifiedOwnerKeyName()
-                        );
+                                $builder->orWhereRaw("(exists($relatedQuery))");
+                            }
+                        });
+                };
+            })
+            ->orWhere(function ($query) use ($search) {
+                $parts = explode(',', $search);
+                foreach ($parts as $part) {
+                    $part = addslashes($part);
+                    $model = $query->getModel();
 
-                        $builder->orWhereRaw("(exists($relatedQuery))");
+                    foreach (static::searchableColumns() as $column) {
+                        $query->orWhere($model->qualifyColumn($column), 'like', $part.'%');
                     }
-                });
-            };
-        });
-
-
-        return $query;
+                }
+            })->dd();
     }
+
 
     /**
      * Returns a Closure that applies a search query for a given columns.
@@ -107,7 +103,7 @@ trait SearchesRelations
         foreach ($columns as $column) {
             $parts = explode(',', $search);
             foreach ($parts as $part) {
-                $query->orWhere($model->qualifyColumn($column), 'LIKE', '%'.$part.'%');
+                $query->orWhere($model->qualifyColumn($column), 'LIKE', $part.'%');
             }
         }
 
