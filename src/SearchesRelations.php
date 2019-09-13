@@ -79,8 +79,7 @@ trait SearchesRelations
                             }
                         });
                 };
-            })
-            ->dd();
+            });
     }
 
 
