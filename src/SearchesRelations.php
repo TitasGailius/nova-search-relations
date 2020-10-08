@@ -2,7 +2,6 @@
 
 namespace Titasgailius\SearchRelations;
 
-use Closure;
 use Illuminate\Database\Eloquent\Builder;
 
 trait SearchesRelations
@@ -43,9 +42,6 @@ trait SearchesRelations
             return static::$globalSearchRelations;
         }
 
-        // This is a deprecated property. To turn off the global search, instead of setting
-        // the "$searchRelationsGlobally" property to false, it is recommended to set the
-        // "$globalSearchRelations" property to an empty array.
         if (! (static::$searchRelationsGlobally ?? true)) {
             return [];
         }
