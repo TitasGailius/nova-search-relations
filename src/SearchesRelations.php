@@ -14,7 +14,8 @@ trait SearchesRelations
      */
     public static function searchable()
     {
-        return parent::searchable() || !empty(static::$searchRelations);
+        return parent::searchable()
+            || ! empty(static::$searchRelations);
     }
 
     /**
@@ -24,10 +25,29 @@ trait SearchesRelations
      */
     public static function searchableRelations(): array
     {
-        $searchRelationsGlobally = static::$searchRelationsGlobally ?? true;
+        if (static::isGlobalSearch()) {
+            return static::globallySearchableRelations();
+        }
 
-        if (!$searchRelationsGlobally && static::isGlobalSearch()) {
-            return static::$globalSearchRelations ?? [];
+        return static::$searchRelations ?? [];
+    }
+
+    /**
+     * Get the globally searchable relations for the resource.
+     *
+     * @return array
+     */
+    public static function globallySearchableRelations(): array
+    {
+        if (isset(static::$globalSearchRelations)) {
+            return static::$globalSearchRelations;
+        }
+
+        // This is a deprecated property. To turn off the global search, instead of setting
+        // the "$searchRelationsGlobally" property to false, it is recommended to set the
+        // "$globalSearchRelations" property to an empty array.
+        if (! (static::$searchRelationsGlobally ?? true)) {
+            return [];
         }
 
         return static::$searchRelations ?? [];
@@ -67,46 +87,8 @@ trait SearchesRelations
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        foreach (static::searchableRelations() as $relation => $columns) {
-            $query->orWhereHas($relation, function ($query) use ($columns, $search) {
-                $query->where(static::searchQueryApplier($columns, $search));
-            });
-        }
-
-        return $query;
-    }
-
-    /**
-     * Returns a Closure that applies a search query for a given columns.
-     *
-     * @param  array $columns
-     * @param  string $search
-     * @return \Closure
-     */
-    protected static function searchQueryApplier(array $columns, string $search): Closure
-    {
-        return function ($query) use ($columns, $search) {
-            $model = $query->getModel();
-            $operator = static::operator($query);
-
-            foreach ($columns as $column) {
-                $query->orWhere($model->qualifyColumn($column), $operator, '%'.$search.'%');
-            }
-        };
-    }
-
-    /**
-     * Resolve the query operator.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return string
-     */
-    protected static function operator(Builder $query): string
-    {
-        if ($query->getModel()->getConnection()->getDriverName() === 'pgsql') {
-            return 'ILIKE';
-        }
-
-        return 'LIKE';
+        return (new RelationSearchQuery(
+            static::searchableRelations()
+        ))->apply($query, $search);
     }
 }
