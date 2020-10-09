@@ -83,8 +83,49 @@ trait SearchesRelations
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        return (new RelationSearchQuery(
-            static::searchableRelations()
-        ))->apply($query, $search);
+        foreach (static::searchableRelations() as $relation => $columns) {
+            $query->orWhereHas($relation, function ($query) use ($columns, $search) {
+                static::applyColumnSearch($query, $columns, $search);
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Apply search for the given columns.
+     *
+     * @param  Builder $query
+     * @param  array $columns
+     * @param  string $search
+     * @return Builder
+     */
+    protected static function applyColumnSearch(Builder $query, array $columns, string $search): Builder
+    {
+        return $query->where(function ($query) use ($columns, $search) {
+            $model = $query->getModel();
+            $operator = static::operator($query);
+
+            foreach ($columns as $column) {
+                $query->orWhere($model->qualifyColumn($column), $operator, '%'.$search.'%');
+            }
+
+            return $query;
+        });
+    }
+
+    /**
+     * Get the like operator for the given query.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return string
+     */
+    protected static function operator(Builder $query): string
+    {
+        if ($query->getModel()->getConnection()->getDriverName() === 'pgsql') {
+            return 'ILIKE';
+        }
+
+        return 'LIKE';
     }
 }
