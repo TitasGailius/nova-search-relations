@@ -39,7 +39,7 @@ public static $searchRelations = [
 
 ## Global search
 
-You may customize the rules of your searchable relationships in global search by defining the `$globalSearchRelations` property.
+You may customize the rules of your searchable relationships for global search by defining the `$globalSearchRelations` property.
 
 ```php
 /**
