@@ -24,13 +24,40 @@ trait SearchesRelations
      */
     public static function searchableRelations(): array
     {
-        $searchRelationsGlobally = static::$searchRelationsGlobally ?? true;
-
-        if (!$searchRelationsGlobally && static::isGlobalSearch()) {
-            return static::$globalSearchRelations ?? [];
+        if (static::isGlobalSearch()) {
+            return static::globallySearchableRelations();
         }
 
         return static::$searchRelations ?? [];
+    }
+
+    /**
+     * Get the globally searchable relations for the resource.
+     *
+     * @return array
+     */
+    public static function globallySearchableRelations(): array
+    {
+        if (isset(static::$globalSearchRelations)) {
+            return static::$globalSearchRelations;
+        }
+
+        if (static::globalSearchDisabledForRelations()) {
+            return [];
+        }
+
+        return static::$searchRelations ?? [];
+    }
+
+    /**
+     * Determine if a global search is disabled for the relationships.
+     *
+     * @return boolean
+     */
+    protected static function globalSearchDisabledForRelations(): bool
+    {
+        return isset(static::$searchRelationsGlobally)
+            && ! static::$searchRelationsGlobally;
     }
 
     /**
