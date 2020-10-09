@@ -24,7 +24,8 @@ abstract class Resource extends NovaResource
 ## Usage
 
 Simply add `public static $searchRelations` array to any of your Nova resources.
-This array has a relationship name as a key and an array of columns to search for as a value.
+This array accepts a relationship name as a key and an array of searchable columns as a value.
+
 ```php
 /**
  * The relationship columns that should be searched.
@@ -38,26 +39,9 @@ public static $searchRelations = [
 
 ## Global search
 
-You may disable global search for relationship columns by defining `$searchRelationsGlobally` property in your nova resource:
+You may customize the rules of your searchable relationships in global search by defining the `$globalSearchRelations` property.
 
 ```php
-/**
- * Determine if relations should be searched globally.
- *
- * @var array
- */
-public static $searchRelationsGlobally = false;
-```
-
-When you have disabled global search for relationships, you may still enable it for specific relationships like this:
-```php
-/**
- * Determine if relations should be searched globally.
- *
- * @var array
- */
-public static $searchRelationsGlobally = false;
-
 /**
  * The relationship columns that should be searched globally.
  *
@@ -66,10 +50,29 @@ public static $searchRelationsGlobally = false;
 public static $globalSearchRelations = [
     'user' => ['email'],
 ];
-
 ```
 
-Now when searching globally, Laravel Nova is going to **ignore** relationships declared in `$searchRelations` and is going to use `$globalSearchRelations` instead.
+You may disable the global search for relationships by defining the `$globalSearchRelations` property with an empty array.
+
+```php
+/**
+ * The relationship columns that should be searched globally.
+ *
+ * @var array
+ */
+public static $globalSearchRelations = [];
+```
+
+Alternatevily, you may disable the global search for relationships by setting the `$searchRelationsGlobally` property to `false`.
+
+```php
+/**
+ * Determine if relations should be searched globally.
+ *
+ * @var array
+ */
+public static $searchRelationsGlobally = false;
+```
 
 ## Nested relationships
 
