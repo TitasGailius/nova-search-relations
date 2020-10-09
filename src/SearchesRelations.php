@@ -95,9 +95,19 @@ trait SearchesRelations
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
         foreach (static::searchableRelations() as $relation => $columns) {
-            $query->orWhereHas($relation, function ($query) use ($columns, $search) {
-                $query->where(static::searchQueryApplier($columns, $search));
-            });
+            if (static::isRelationMorphable($relation)) {
+                $query->orWhereHasMorph(
+                    $relation,
+                    static::getMorphableClasses($relation)->toArray(),
+                    function ($query) use ($columns, $search) {
+                        $query->where(static::searchQueryApplier($columns, $search));
+                    });
+            } else {
+                $query->orWhereHas($relation, function ($query) use ($columns, $search) {
+                    static::searchQueryApplier($columns, $search);
+                    $query->where(static::searchQueryApplier($columns, $search));
+                });
+            }
         }
 
         return $query;
@@ -135,5 +145,48 @@ trait SearchesRelations
         }
 
         return 'LIKE';
+    }
+
+    /**
+     * Get Relation Class of Ressource Model
+     *
+     * @param string $relationName
+     * @return mixed
+     */
+    public static function getRelation(string $relationName) {
+        return (new static::$model())->$relationName();
+    }
+
+    /**
+     * Checks if Relation is MorphTo
+     *
+     * @param string $relationName
+     * @return bool
+     */
+    public static function isRelationMorphable(string $relationName) {
+        $relation = static::getRelation($relationName);
+        return get_class($relation) === MorphTo::class ||
+            is_subclass_of(
+                (new static::$model())->$relationName(),
+                MorphTo::class
+            );
+    }
+
+    /**
+     * Returns used Relationships of Morphable Fields
+     *
+     * @param string $relationName
+     * @return mixed
+     */
+    public static function getMorphableClasses(string $relationName) : Collection
+    {
+        $relation = static::getRelation($relationName);
+        return \DB::table($relation->getParent()->getTable())
+            ->select($relation->getMorphType())
+            ->distinct()
+            ->pluck($relation->getMorphType())
+            ->filter(function($class) use ($relation) {
+                return ($class !== get_class($relation->getParent()));
+            });
     }
 }
