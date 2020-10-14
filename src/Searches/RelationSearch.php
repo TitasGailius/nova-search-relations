@@ -1,10 +1,11 @@
 <?php
 
-namespace Titasgailius\SearchRelations;
+namespace Titasgailius\SearchRelations\Searches;
 
 use Illuminate\Database\Eloquent\Builder;
+use Titasgailius\SearchRelations\Contracts\Search;
 
-class RelationSearchQuery
+class RelationSearch implements Search
 {
     /**
      * Searchable relations.
@@ -24,13 +25,13 @@ class RelationSearchQuery
     }
 
     /**
-     * Apply search query.
+     * Apply search.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $search
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     * @param  string  $search
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function apply(Builder $query, $search): Builder
+    public function apply(Builder $builder, string $search): Builder
     {
         foreach ($this->relations as $relation => $columns) {
             $query->orWhereHas($relation, function ($query) use ($columns, $search) {

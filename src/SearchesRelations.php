@@ -3,6 +3,8 @@
 namespace Titasgailius\SearchRelations;
 
 use Illuminate\Database\Eloquent\Builder;
+use Titasgailius\SearchRelations\Contracts\Search;
+use Titasgailius\SearchRelations\Searches\RelationSearch;
 
 trait SearchesRelations
 {
@@ -95,48 +97,32 @@ trait SearchesRelations
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
         foreach (static::searchableRelations() as $relation => $columns) {
-            $query->orWhereHas($relation, function ($query) use ($columns, $search) {
-                static::applyColumnSearch($query, $columns, $search);
-            });
+            static::parseSearch($columns, $relation)->apply($query, $search);
         }
 
         return $query;
     }
 
     /**
-     * Apply search for the given columns.
+     * Parse search.
      *
-     * @param  Builder $query
-     * @param  array $columns
-     * @param  string $search
-     * @return Builder
+     * @param  mixed $search
+     * @param  string $relation
+     * @return \Titasgailius\SearchRelations\Contracts\Search
      */
-    protected static function applyColumnSearch(Builder $query, array $columns, string $search): Builder
+    protected static function parseSearch($search, $relation): Search
     {
-        return $query->where(function ($query) use ($columns, $search) {
-            $model = $query->getModel();
-            $operator = static::operator($query);
-
-            foreach ($columns as $column) {
-                $query->orWhere($model->qualifyColumn($column), $operator, '%'.$search.'%');
-            }
-
-            return $query;
-        });
-    }
-
-    /**
-     * Get the like operator for the given query.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return string
-     */
-    protected static function operator(Builder $query): string
-    {
-        if ($query->getModel()->getConnection()->getDriverName() === 'pgsql') {
-            return 'ILIKE';
+        if ($search instanceof Search) {
+            return $search;
         }
 
-        return 'LIKE';
+        if (is_array($search)) {
+            return new RelationSearch($search);
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'Unsupported search configuration in [%s] resource for [%s] relationship.',
+            static::class, $relation
+        ));
     }
 }

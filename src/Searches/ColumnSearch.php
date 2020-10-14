@@ -1,10 +1,11 @@
 <?php
 
-namespace Titasgailius\SearchRelations;
+namespace Titasgailius\SearchRelations\Searches;
 
 use Illuminate\Database\Eloquent\Builder;
+use Titasgailius\SearchRelations\Contracts\Search;
 
-class SearchQuery
+class ColumnSearch implements Search
 {
     /**
      * Searchable columns.
@@ -24,13 +25,13 @@ class SearchQuery
     }
 
     /**
-     * Apply search query.
+     * Apply search.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $search
-     * @return Builder
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     * @param  string  $search
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function apply(Builder $query, $search): Builder
+    public function apply(Builder $builder, string $search): Builder
     {
         return $query->where(function ($query) use ($search) {
             return $this->applySearchQuery($query, $search);
@@ -62,7 +63,7 @@ class SearchQuery
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return string
      */
-    protected static function operator(Builder $query): string
+    protected function operator(Builder $query): string
     {
         if ($query->getModel()->getConnection()->getDriverName() === 'pgsql') {
             return 'ILIKE';
