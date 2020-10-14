@@ -126,7 +126,7 @@ public static $searchRelations = [
 
 ## Extending Search
 
-You may apply custom search logic for the specified relations by retuning a class that is implementing a `Search` interface.
+You may apply custom search logic for the specified relations by retuning a class implementing a `Search` interface.
 
 ```php
 /**
