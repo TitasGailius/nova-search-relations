@@ -42,11 +42,22 @@ trait SearchesRelations
             return static::$globalSearchRelations;
         }
 
-        if (! (static::$searchRelationsGlobally ?? true)) {
+        if (static::globalSearchDisabledForRelations()) {
             return [];
         }
 
         return static::$searchRelations ?? [];
+    }
+
+    /**
+     * Determine if a global search is disabled for the relationships.
+     *
+     * @return boolean
+     */
+    protected static function globalSearchDisabledForRelations(): bool
+    {
+        return isset(static::$searchRelationsGlobally)
+            && ! static::$searchRelationsGlobally;
     }
 
     /**
