@@ -25,13 +25,14 @@ class ColumnSearch implements Search
     }
 
     /**
-     * Apply search.
+     * Apply search for the given relation.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $relation
      * @param  string  $search
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function apply(Builder $builder, string $search): Builder
+    public function apply(Builder $query, string $relation, string $search): Builder
     {
         return $query->where(function ($query) use ($search) {
             return $this->applySearchQuery($query, $search);
@@ -45,7 +46,7 @@ class ColumnSearch implements Search
      * @param  string $search
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    protected function applySearchQuery(Builder $query, $search): Builder
+    protected function applySearchQuery(Builder $query, string $search): Builder
     {
         $model = $query->getModel();
         $operator = $this->operator($query);

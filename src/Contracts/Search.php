@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Builder;
 interface Search
 {
     /**
-     * Apply search.
+     * Apply search for the given relation.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $relation
      * @param  string  $search
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function apply(Builder $builder, string $search): Builder;
+    public function apply(Builder $query, string $relation, string $search): Builder;
 }

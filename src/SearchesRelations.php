@@ -2,6 +2,7 @@
 
 namespace Titasgailius\SearchRelations;
 
+use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Titasgailius\SearchRelations\Contracts\Search;
 use Titasgailius\SearchRelations\Searches\RelationSearch;
@@ -16,7 +17,7 @@ trait SearchesRelations
     public static function searchable()
     {
         return parent::searchable()
-            || ! empty(static::$searchRelations);
+            || ! empty(static::resolveSearchableRelations());
     }
 
     /**
@@ -26,10 +27,6 @@ trait SearchesRelations
      */
     public static function searchableRelations(): array
     {
-        if (static::isGlobalSearch()) {
-            return static::globallySearchableRelations();
-        }
-
         return static::$searchRelations ?? [];
     }
 
@@ -44,22 +41,33 @@ trait SearchesRelations
             return static::$globalSearchRelations;
         }
 
-        if (static::globalSearchDisabledForRelations()) {
+        if (! static::relationsAreGloballySearchable()) {
             return [];
         }
 
-        return static::$searchRelations ?? [];
+        return static::searchableRelations();
     }
 
     /**
-     * Determine if a global search is disabled for the relationships.
+     * Determine if relations are globally searchable.
      *
-     * @return boolean
+     * @return bool
      */
-    protected static function globalSearchDisabledForRelations(): bool
+    public static function relationsAreGloballySearchable(): bool
     {
-        return isset(static::$searchRelationsGlobally)
-            && ! static::$searchRelationsGlobally;
+        return static::$searchRelationsGlobally ?? true;
+    }
+
+    /**
+     * Resolve searchable relations for the current request.
+     *
+     * @return array
+     */
+    protected static function resolveSearchableRelations(): array
+    {
+        return static::isGlobalSearch()
+            ? static::globallySearchableRelations()
+            : static::searchableRelations();
     }
 
     /**
@@ -96,8 +104,8 @@ trait SearchesRelations
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        foreach (static::searchableRelations() as $relation => $columns) {
-            static::parseSearch($columns, $relation)->apply($query, $search);
+        foreach (static::resolveSearchableRelations() as $relation => $columns) {
+            static::parseSearch($relation, $columns)->apply($query, $relation, $search);
         }
 
         return $query;
@@ -106,18 +114,18 @@ trait SearchesRelations
     /**
      * Parse search.
      *
-     * @param  mixed $search
      * @param  string $relation
+     * @param  mixed $columns
      * @return \Titasgailius\SearchRelations\Contracts\Search
      */
-    protected static function parseSearch($search, $relation): Search
+    protected static function parseSearch($relation, $columns): Search
     {
-        if ($search instanceof Search) {
-            return $search;
+        if ($columns instanceof Search) {
+            return $columns;
         }
 
-        if (is_array($search)) {
-            return new RelationSearch($search);
+        if (is_array($columns)) {
+            return new RelationSearch($columns);
         }
 
         throw new InvalidArgumentException(sprintf(
