@@ -41,21 +41,11 @@ trait SearchesRelations
             return static::$globalSearchRelations;
         }
 
-        if (! static::relationsAreGloballySearchable()) {
-            return [];
+        if (static::$searchRelationsGlobally ?? true) {
+            return parent::searchableRelations();
         }
 
-        return static::searchableRelations();
-    }
-
-    /**
-     * Determine if relations are globally searchable.
-     *
-     * @return bool
-     */
-    public static function relationsAreGloballySearchable(): bool
-    {
-        return static::$searchRelationsGlobally ?? true;
+        return [];
     }
 
     /**
