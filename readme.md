@@ -23,7 +23,7 @@ abstract class Resource extends NovaResource
 
 ## Usage
 
-Simply add `public static $searchRelations` array to any of your Nova resources.
+Simply add `public static $searchRelations` variable to any of your Nova resources.
 This array accepts a relationship name as a key and an array of searchable columns as a value.
 
 ```php
@@ -35,6 +35,22 @@ This array accepts a relationship name as a key and an array of searchable colum
 public static $searchRelations = [
     'user' => ['username', 'email'],
 ];
+```
+
+Alternatively, you may add a static `searchableRelations()` method to return an array of searchable relations.
+
+```php
+/**
+ * Get the searchable columns for the resource.
+ *
+ * @return array
+ */
+public static function searchableRelations(): array
+{
+    return [
+        'user' => ['username', 'email'],
+    ];
+}
 ```
 
 ## Global search
@@ -52,7 +68,26 @@ public static $globalSearchRelations = [
 ];
 ```
 
-You may disable the global search for relationships by defining the `$globalSearchRelations` property with an empty array.
+Alternatively, you may add a static `globallySearchableRelations()` method to return an array of globally searchable relations.
+
+```php
+/**
+ * Get the searchable columns for the resource.
+ *
+ * @return array
+ */
+public static function globallySearchableRelations(): array
+{
+    return [
+        'user' => ['email'],
+    ];
+}
+```
+
+---
+#### Disabling global search for relationships
+
+You may disable the global relationship search by declaring `$globalSearchRelations` with an empty array.
 
 ```php
 /**
@@ -88,3 +123,47 @@ public static $searchRelations = [
     'user.country' => ['code'],
 ];
 ```
+
+## Extending Search
+
+You may apply custom search logic for the specified relations by retuning a class implementing a `Search` interface.
+
+```php
+/**
+ * Get the searchable columns for the resource.
+ *
+ * @return array
+ */
+public static function searchableRelations(): array
+{
+    return [
+        'country' => new LocationSearch(['USA', 'UK']),
+    ];
+}
+```
+
+Your custom search class must implement a simple `Search` interface that has a single method which accepts
+the current query `$query`, a relationship name `$relation` and a search input `$search`.
+
+```php
+<?php
+
+namespace Titasgailius\SearchRelations\Contracts;
+
+use Illuminate\Database\Eloquent\Builder;
+
+interface Search
+{
+    /**
+     * Apply search for the given relation.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $relation
+     * @param  string  $search
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function apply(Builder $query, string $relation, string $search): Builder;
+}
+```
+
+You may take a look at the `Titasgailius\SearchRelations\Searches\RelationSearch` class as an example.

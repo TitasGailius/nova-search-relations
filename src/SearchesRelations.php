@@ -2,8 +2,10 @@
 
 namespace Titasgailius\SearchRelations;
 
-use Closure;
+use InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
+use Titasgailius\SearchRelations\Contracts\Search;
+use Titasgailius\SearchRelations\Searches\RelationSearch;
 
 trait SearchesRelations
 {
@@ -14,7 +16,8 @@ trait SearchesRelations
      */
     public static function searchable()
     {
-        return parent::searchable() || !empty(static::$searchRelations);
+        return parent::searchable()
+            || ! empty(static::resolveSearchableRelations());
     }
 
     /**
@@ -24,10 +27,6 @@ trait SearchesRelations
      */
     public static function searchableRelations(): array
     {
-        if (static::isGlobalSearch()) {
-            return static::globallySearchableRelations();
-        }
-
         return static::$searchRelations ?? [];
     }
 
@@ -42,22 +41,23 @@ trait SearchesRelations
             return static::$globalSearchRelations;
         }
 
-        if (static::globalSearchDisabledForRelations()) {
-            return [];
+        if (static::$searchRelationsGlobally ?? true) {
+            return static::searchableRelations();
         }
 
-        return static::$searchRelations ?? [];
+        return [];
     }
 
     /**
-     * Determine if a global search is disabled for the relationships.
+     * Resolve searchable relations for the current request.
      *
-     * @return boolean
+     * @return array
      */
-    protected static function globalSearchDisabledForRelations(): bool
+    protected static function resolveSearchableRelations(): array
     {
-        return isset(static::$searchRelationsGlobally)
-            && ! static::$searchRelationsGlobally;
+        return static::isGlobalSearch()
+            ? static::globallySearchableRelations()
+            : static::searchableRelations();
     }
 
     /**
@@ -94,46 +94,33 @@ trait SearchesRelations
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {
-        foreach (static::searchableRelations() as $relation => $columns) {
-            $query->orWhereHas($relation, function ($query) use ($columns, $search) {
-                $query->where(static::searchQueryApplier($columns, $search));
-            });
+        foreach (static::resolveSearchableRelations() as $relation => $columns) {
+            static::parseSearch($relation, $columns)->apply($query, $relation, $search);
         }
 
         return $query;
     }
 
     /**
-     * Returns a Closure that applies a search query for a given columns.
+     * Parse search.
      *
-     * @param  array $columns
-     * @param  string $search
-     * @return \Closure
+     * @param  string $relation
+     * @param  mixed $columns
+     * @return \Titasgailius\SearchRelations\Contracts\Search
      */
-    protected static function searchQueryApplier(array $columns, string $search): Closure
+    protected static function parseSearch($relation, $columns): Search
     {
-        return function ($query) use ($columns, $search) {
-            $model = $query->getModel();
-            $operator = static::operator($query);
-
-            foreach ($columns as $column) {
-                $query->orWhere($model->qualifyColumn($column), $operator, '%'.$search.'%');
-            }
-        };
-    }
-
-    /**
-     * Resolve the query operator.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return string
-     */
-    protected static function operator(Builder $query): string
-    {
-        if ($query->getModel()->getConnection()->getDriverName() === 'pgsql') {
-            return 'ILIKE';
+        if ($columns instanceof Search) {
+            return $columns;
         }
 
-        return 'LIKE';
+        if (is_array($columns)) {
+            return new RelationSearch($columns);
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'Unsupported search configuration in [%s] resource for [%s] relationship.',
+            static::class, $relation
+        ));
     }
 }
