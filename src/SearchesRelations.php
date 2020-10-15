@@ -42,7 +42,7 @@ trait SearchesRelations
         }
 
         if (static::$searchRelationsGlobally ?? true) {
-            return parent::searchableRelations();
+            return static::searchableRelations();
         }
 
         return [];
