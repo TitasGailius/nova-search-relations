@@ -53,7 +53,17 @@ class RelationSearch implements Search
      */
     protected function ensureRelationshipExists(Builder $query, string $relation)
     {
-        $query->getRelation($relation);
+        if (strpos($relation, '.') === false) {
+            $query->getRelation($relation);
+
+            return;
+        }
+
+        $parts = explode('.', $relation);
+        $rel = $query;
+        while(!empty($parts)) {
+            $rel = $rel->getRelation(array_shift($parts));
+        }
     }
 
     /**
