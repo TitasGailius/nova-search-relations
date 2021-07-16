@@ -35,25 +35,11 @@ class RelationSearch implements Search
      */
     public function apply(Builder $query, string $relation, string $search): Builder
     {
-        $this->ensureRelationshipExists($query, $relation);
-
         $query->orWhereHas($relation, function ($query) use ($relation, $search) {
             return $this->columnSearch()->apply($query, $relation, $search);
         });
 
         return $query;
-    }
-
-    /**
-     * Ensure that the specified relationship exists.
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @param  string $relation
-     * @return void
-     */
-    protected function ensureRelationshipExists(Builder $query, string $relation)
-    {
-        $query->getRelation($relation);
     }
 
     /**
