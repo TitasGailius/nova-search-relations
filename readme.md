@@ -1,3 +1,6 @@
+I stand with Ukraine | 🇺🇦
+:---: | :---
+
 # Search relationships in Laravel Nova
 
 This package allows you to include relationship columns into Laravel Nova search query.
