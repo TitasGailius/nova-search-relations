@@ -10,6 +10,13 @@ use Titasgailius\SearchRelations\Searches\RelationSearch;
 trait SearchesRelations
 {
     /**
+     * Give the oppurtunity to change the search split character.
+     * Set to a character to enable splitting search 
+     * @var string
+     */
+    protected static $searchSplitCharacter = null;
+    
+    /**
      * Determine if this resource is searchable.
      *
      * @return bool
@@ -73,16 +80,34 @@ trait SearchesRelations
     /**
      * Apply the search query to the query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $search
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $search
      * @return \Illuminate\Database\Eloquent\Builder
      */
     protected static function applySearch($query, $search)
     {
-        return $query->where(function ($query) use ($search) {
-            parent::applySearch($query, $search);
-            static::applyRelationSearch($query, $search);
+        /**
+         * If $searchSplitCharacter is null or...
+         * If search does not contain $searchSplitCharacter...
+         * we can use the default search
+         */
+        if (self::$searchSplitCharacter === null || strpos($search, self::$searchSplitCharacter) === false) {
+            return $query->where(function ($query) use ($search) {
+                parent::applySearch($query, $search);
+                static::applyRelationSearch($query, $search);
+            });
+        }
+
+        $query->where(function (Builder $query) use ($search) {
+            foreach (explode(self::$searchSplitCharacter, $search) as $search) {
+                $query->orWhere(function ($query) use ($search) {
+                    parent::applySearch($query, $search);
+                    static::applyRelationSearch($query, $search);
+                });
+            }
         });
+        
+        return $query;
     }
 
     /**
