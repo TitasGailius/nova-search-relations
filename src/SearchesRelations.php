@@ -3,7 +3,7 @@
 namespace Titasgailius\SearchRelations;
 
 use InvalidArgumentException;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Titasgailius\SearchRelations\Contracts\Search;
 use Titasgailius\SearchRelations\Searches\RelationSearch;
 
@@ -73,11 +73,11 @@ trait SearchesRelations
     /**
      * Apply the search query to the query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Illuminate\Contracts\Database\Eloquent\Builder  $query
      * @param  string  $search
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Illuminate\Contracts\Database\Eloquent\Builder
      */
-    protected static function applySearch($query, $search): Builder
+    protected static function applySearch(Builder $query, string $search): Builder
     {
         return $query->where(function ($query) use ($search) {
             parent::applySearch($query, $search);
@@ -88,9 +88,9 @@ trait SearchesRelations
     /**
      * Apply the relationship search query to the given query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Illuminate\Contracts\Database\Eloquent\Builder  $query
      * @param  string  $search
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Illuminate\Contracts\Database\Eloquent\Builder
      */
     protected static function applyRelationSearch(Builder $query, string $search): Builder
     {

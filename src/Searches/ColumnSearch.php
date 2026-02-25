@@ -2,7 +2,7 @@
 
 namespace Titasgailius\SearchRelations\Searches;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Titasgailius\SearchRelations\Contracts\Search;
 
 class ColumnSearch implements Search
@@ -27,10 +27,10 @@ class ColumnSearch implements Search
     /**
      * Apply search for the given relation.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Illuminate\Contracts\Database\Eloquent\Builder  $query
      * @param  string  $relation
      * @param  string  $search
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Illuminate\Contracts\Database\Eloquent\Builder
      */
     public function apply(Builder $query, string $relation, string $search): Builder
     {
@@ -42,9 +42,9 @@ class ColumnSearch implements Search
     /**
      * Apply search query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
+     * @param  Illuminate\Contracts\Database\Eloquent\Builder $query
      * @param  string $search
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Illuminate\Contracts\Database\Eloquent\Builder
      */
     protected function applySearchQuery(Builder $query, string $search): Builder
     {
@@ -61,7 +61,7 @@ class ColumnSearch implements Search
     /**
      * Get the like operator for the given query.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Illuminate\Contracts\Database\Eloquent\Builder  $query
      * @return string
      */
     protected function operator(Builder $query): string
